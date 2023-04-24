@@ -184,12 +184,17 @@ public class RangeTree {
 	 */
 
 	public Node buildKDTree(int[][] points, int depth) {
-		int[][] Px = points;
-		int[][] Py = points;
-		int[][] Pz = points;
+		int[][] Px = new int[points.length][];
+		int[][] Py = new int[points.length][];
+		int[][] Pz = new int[points.length][];
+		for (int i = 0; i < points.length; i++) {
+			Px[i] = points[i];
+			Py[i] = points[i];
+			Pz[i] = points[i];
+		}
 		Arrays.sort(Px, (a, b) -> Integer.compare(a[0], b[0]));
 		Arrays.sort(Py, (a, b) -> Integer.compare(a[1], b[1]));
-		Arrays.sort(Pz, (a, b) -> Integer.compare(a[1], b[1]));
+		Arrays.sort(Pz, (a, b) -> Integer.compare(a[2], b[2]));
 		return buildKDTree(Px, Py, Pz, depth);
 	}
 	
@@ -200,24 +205,50 @@ public class RangeTree {
 		if (Px.length == 0) {
 			return null;
 		}
+		if (Py.length == 0) {
+			return null;
+		}
 		if (Px.length == 1) {
 			Node leaf = new Node(Px[0]);
 			return leaf;
 		}
-		int[][] PxLeft = new int[Px.length / 2][];
-		int[][] PxRight = new int[Px.length - Px.length / 2][];
-		int[][] PyLeft = new int[Py.length / 2][];
-		int[][] PyRight = new int[Py.length - Py.length / 2][];
-		int[][] PzLeft = new int[Pz.length / 2][];
-		int[][] PzRight = new int[Pz.length - Pz.length / 2][];
+		if (Py.length == 1) {
+			Node leaf = new Node(Py[0]);
+			return leaf;
+		}
+		int[][] PxLeft;
+		int[][] PxRight;
+		int[][] PyLeft;
+		int[][] PyRight;
+		int[][] PzLeft;
+		int[][] PzRight;
+		if (Px.length == 2) {
+			PxLeft = new int[1][];
+			PxRight = new int[1][];
+			PyLeft = new int[1][];
+			PyRight = new int[1][];
+			PzLeft = new int[1][];
+			PzRight = new int[1][];
+		}
+		else
+		{
+			PxLeft = new int[(Px.length / 2) + 1][];
+			PxRight = new int[Px.length - (Px.length / 2) - 1][];
+			PyLeft = new int[(Py.length / 2) + 1][];
+			PyRight = new int[Py.length - (Py.length / 2) - 1][];
+			PzLeft = new int[(Pz.length / 2) + 1][];
+			PzRight = new int[Pz.length - (Pz.length / 2) - 1][];
+		}
 		int median;
 		if (depth % 2 == 0) {
-			median = Px[Px.length / 2][0];
-			for (int i = 0; i <= Px.length / 2; i++) {
-				PxLeft[i] = Px[i];
-			}
-			for (int i = (Px.length / 2) + 1; i < Px.length; i++) {
-				PxRight[i - (Px.length / 2)] = Px[i];
+			median = Px[(Px.length - 1) / 2][0];
+			for (int i = 0; i < Px.length; i++) {
+				if (i < Px.length / 2) {
+					PxLeft[i] = Px[i];
+				}
+				else {
+					PxRight[i - Px.length / 2 - 1] = Px[i];
+				}
 			}
 			int iter = 0;
 			int iter1 = 0;
@@ -243,18 +274,23 @@ public class RangeTree {
 					iter3++;
 				}
 			}
+			Node headNode = new Node(Px[(Px.length - 1) / 2]);
+			headNode.setAssoc(buildRangeTree(Pz));
+			headNode.setLeftNode(buildKDTree(PxLeft, PyLeft, PzLeft, depth+1));
+			headNode.setRightNode(buildKDTree(PxRight, PyRight, PzRight, depth+1));
+			return headNode;
 		}
 		else {
-			median = Py[Py.length / 2][1];
-			for (int i = 0; i < Py.length / 2; i++) {
-				PyLeft[i] = Py[i];
+			median = Py[(Py.length - 1) / 2][1];
+			for (int i = 0; i < Py.length; i++) {
+				if (i < (Py.length) / 2) {
+					PyLeft[i] = Py[i];
+				}
+				else {
+					PyRight[i - Py.length / 2 - 1] = Py[i];
+				}
 			}
-			for (int i = Py.length / 2; i < Py.length; i++) {
-				PyRight[i - (Py.length / 2)] = Py[i];
-			}
-			int iter = 0;
-			int iter1 = 0;
-
+			int iter = 0, iter1 = 0;
 			for (int i = 0; i < Px.length; i++) {
 				if (Px[i][1] <= median) {
 					PxLeft[iter] = Px[i];
@@ -265,8 +301,7 @@ public class RangeTree {
 					iter1++;
 				}
 			}
-			int iter2 = 0;
-			int iter3 = 0;
+			int iter2 = 0, iter3 = 0;
 			for (int i = 0; i < Pz.length; i++) {
 				if (Pz[i][1] <= median) {
 					PzLeft[iter2] = Pz[i];
@@ -277,12 +312,12 @@ public class RangeTree {
 					iter3++;
 				}
 			}
+			Node headNode = new Node(Py[(Py.length - 1) / 2]);
+			headNode.setAssoc(buildRangeTree(Pz));
+			headNode.setLeftNode(buildKDTree(PxLeft, PyLeft, PzLeft, depth+1));
+			headNode.setRightNode(buildKDTree(PxRight, PyRight, PzRight, depth+1));
+			return headNode;
 		}
-		Node headNode = new Node(Py[Py.length / 2]);
-		headNode.setLeftNode(buildKDTree(PxLeft, PyLeft, PzLeft, depth+1));
-		headNode.setRightNode(buildKDTree(PxRight, PyRight, PzRight, depth+1));
-		headNode.setAssoc(buildRangeTree(Pz));
-		return headNode;
 	}
 	
 	public Node buildRangeTree(int[][] points) {
@@ -290,7 +325,6 @@ public class RangeTree {
 			return null;
 		}
 		// sorting on z
-		Arrays.sort(points, (a, b) -> Integer.compare(a[2], b[2]));
 		int mid = points.length / 2;
 		Node node = new Node(points[mid]);
 		int[][] leftPoints = new int[mid][3];
@@ -306,6 +340,53 @@ public class RangeTree {
 		return node;
 	}
 	
+	public int queryKDTree(int xMin, int xMax, int yMin, int yMax, int zMin, int zMax, Node node, int depth) {
+		if (node == null) {
+			return 0;
+		}
+		int axis = depth % 2;
+		int count=0;
+		// leaf node
+		if (node.getPoint() != null && node.getPoint()[0] >= xMin &&
+		  node.getPoint()[0] <= xMax && node.getPoint()[1] >= yMin &&
+		  node.getPoint()[1] <= yMax && node.getPoint()[2] >= zMin &&
+		  node.getPoint()[2] <= zMax){ 
+			  count += 1; 
+		}
+		else {
+			if (node.getRightNode() != null && node.getLeftNode() != null && node.getXMin() >= xMin &&
+					node.getXMax() <= xMax && node.getYMin() >= yMin && node.getYMax() <= yMax) {
+				return queryRangeTree(zMin, zMax, node.getAssoc());
+			}
+		}
+		// below is correct
+		if (node.getLeftNode() != null && node.getLeftNode().getXMax() >= xMin && node.getLeftNode().getXMin() <= xMax &&
+				node.getLeftNode().getYMax() >= yMin && node.getLeftNode().getYMin() <= yMax) {
+			count += queryKDTree(xMin, xMax, yMin, yMax, zMin, zMax, node.getLeftNode(), depth+1);
+		}
+		if (node.getRightNode() != null && node.getRightNode().getXMax() >= xMin && node.getRightNode().getXMin() <= xMax &&
+				node.getRightNode().getYMax() >= yMin && node.getRightNode().getYMin() <= yMax) {
+			count += queryKDTree(xMin, xMax, yMin, yMax, zMin, zMax, node.getRightNode(), depth+1);
+		}
+		return count;
+	}
+	
+	public int queryRangeTree(int zMin, int zMax, Node node) {
+		if (node == null) {
+			return 0;
+		}
+		int count = 0;
+		if (node.getPoint()[2] >= zMin && node.getPoint()[2] <= zMax) {
+			count +=1;
+		}
+		if (node.getPoint()[2] >= zMin && node.getLeftNode() != null) {
+			count +=  queryRangeTree(zMin, zMax, node.getLeftNode());
+		}
+		if (node.getPoint()[2] <= zMax && node.getRightNode() != null) {
+			count += queryRangeTree(zMin, zMax, node.getRightNode());
+		}
+		return count;
+	}
 	public int updateSubtreeSizes(Node node) {
 		if (node == null) {
 			return 0;
