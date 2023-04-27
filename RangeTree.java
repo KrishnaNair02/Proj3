@@ -205,17 +205,6 @@ public class RangeTree {
 		if (Px.length == 0) {
 			return null;
 		}
-		if (Py.length == 0) {
-			return null;
-		}
-		if (Px.length == 1) {
-			Node leaf = new Node(Px[0]);
-			return leaf;
-		}
-		if (Py.length == 1) {
-			Node leaf = new Node(Py[0]);
-			return leaf;
-		}
 		int[][] PxLeft;
 		int[][] PxRight;
 		int[][] PyLeft;
@@ -232,28 +221,30 @@ public class RangeTree {
 		}
 		else
 		{
-			PxLeft = new int[(Px.length / 2) + 1][];
-			PxRight = new int[Px.length - (Px.length / 2) - 1][];
-			PyLeft = new int[(Py.length / 2) + 1][];
-			PyRight = new int[Py.length - (Py.length / 2) - 1][];
-			PzLeft = new int[(Pz.length / 2) + 1][];
-			PzRight = new int[Pz.length - (Pz.length / 2) - 1][];
+			PxLeft = new int[(Px.length / 2)][];
+			PxRight = new int[Px.length - (Px.length / 2)][];
+			PyLeft = new int[(Py.length / 2)][];
+			PyRight = new int[Py.length - (Py.length / 2)][];
+			PzLeft = new int[(Pz.length / 2)][];
+			PzRight = new int[Pz.length - (Pz.length / 2)][];
 		}
 		int median;
 		if (depth % 2 == 0) {
-			median = Px[(Px.length - 1) / 2][0];
-			for (int i = 0; i < Px.length; i++) {
-				if (i < Px.length / 2) {
-					PxLeft[i] = Px[i];
-				}
-				else {
-					PxRight[i - Px.length / 2 - 1] = Px[i];
-				}
+			if (Px.length == 1) {
+				Node leaf = new Node(Px[0]);
+				return leaf;
+			}
+			median = Px[Px.length / 2][0];
+			for (int i = 0; i < Px.length / 2; i++) {
+				PxLeft[i] = Px[i];
+			}
+			for (int i = Px.length / 2; i < Px.length; i++) {
+				PxRight[i - Px.length / 2] = Px[i];
 			}
 			int iter = 0;
 			int iter1 = 0;
 			for (int i = 0; i < Py.length; i++) {
-				if (Py[i][0] <= median) {
+				if (Py[i][0] < median) {
 					PyLeft[iter] = Py[i];
 					iter++;
 				}
@@ -265,7 +256,7 @@ public class RangeTree {
 			int iter2 = 0;
 			int iter3 = 0;
 			for (int i = 0; i < Pz.length; i++) {
-				if (Pz[i][0] <= median) {
+				if (Pz[i][0] < median) {
 					PzLeft[iter2] = Pz[i];
 					iter2++;
 				}
@@ -274,25 +265,31 @@ public class RangeTree {
 					iter3++;
 				}
 			}
-			Node headNode = new Node(Px[(Px.length - 1) / 2]);
+			Node headNode = new Node(Px[Px.length / 2]);
+			headNode.setXMin(Px[0][0]);
+			headNode.setXMax(Px[Px.length - 1][0]);
+			headNode.setYMin(Py[0][1]);
+			headNode.setYMax(Py[Py.length - 1][1]);
 			headNode.setAssoc(buildRangeTree(Pz));
 			headNode.setLeftNode(buildKDTree(PxLeft, PyLeft, PzLeft, depth+1));
 			headNode.setRightNode(buildKDTree(PxRight, PyRight, PzRight, depth+1));
 			return headNode;
 		}
 		else {
-			median = Py[(Py.length - 1) / 2][1];
-			for (int i = 0; i < Py.length; i++) {
-				if (i < (Py.length) / 2) {
+			if (Py.length == 1) {
+				Node leaf = new Node(Py[0]);
+				return leaf;
+			}
+			median = Py[Py.length / 2][1];
+			for (int i = 0; i < Py.length / 2; i++) {
 					PyLeft[i] = Py[i];
-				}
-				else {
-					PyRight[i - Py.length / 2 - 1] = Py[i];
-				}
+			}
+			for (int i = Py.length / 2; i < Py.length; i++) {
+					PyRight[i - Py.length / 2] = Py[i];
 			}
 			int iter = 0, iter1 = 0;
 			for (int i = 0; i < Px.length; i++) {
-				if (Px[i][1] <= median) {
+				if (Px[i][1] < median) {
 					PxLeft[iter] = Px[i];
 					iter++;
 				}
@@ -303,7 +300,7 @@ public class RangeTree {
 			}
 			int iter2 = 0, iter3 = 0;
 			for (int i = 0; i < Pz.length; i++) {
-				if (Pz[i][1] <= median) {
+				if (Pz[i][1] < median) {
 					PzLeft[iter2] = Pz[i];
 					iter2++;
 				}
@@ -312,7 +309,11 @@ public class RangeTree {
 					iter3++;
 				}
 			}
-			Node headNode = new Node(Py[(Py.length - 1) / 2]);
+			Node headNode = new Node(Py[Py.length / 2]);
+			headNode.setXMin(Px[0][0]);
+			headNode.setXMax(Px[Px.length - 1][0]);
+			headNode.setYMin(Py[0][1]);
+			headNode.setYMax(Py[Py.length - 1][1]);
 			headNode.setAssoc(buildRangeTree(Pz));
 			headNode.setLeftNode(buildKDTree(PxLeft, PyLeft, PzLeft, depth+1));
 			headNode.setRightNode(buildKDTree(PxRight, PyRight, PzRight, depth+1));
@@ -341,6 +342,7 @@ public class RangeTree {
 	}
 	
 	public int queryKDTree(int xMin, int xMax, int yMin, int yMax, int zMin, int zMax, Node node, int depth) {
+		/*
 		if (node == null) {
 			return 0;
 		}
@@ -366,6 +368,38 @@ public class RangeTree {
 		}
 		if (node.getRightNode() != null && node.getRightNode().getXMax() >= xMin && node.getRightNode().getXMin() <= xMax &&
 				node.getRightNode().getYMax() >= yMin && node.getRightNode().getYMin() <= yMax) {
+			count += queryKDTree(xMin, xMax, yMin, yMax, zMin, zMax, node.getRightNode(), depth+1);
+		}
+		return count;
+		*/
+		
+		if (node == null) {
+			return 0;
+		}
+		
+		int axis = depth % 2;
+		int count = 0;
+		// completely contained leaf node
+		
+		// completely disjoint
+		if (node.getPoint() != null && node.getXMin() < xMin && node.getXMax() > xMax && node.getYMin() < yMin && node.getYMax() > yMax
+				&& node.getZMin() < zMin && node.getZMax() > zMax) {
+			return 0;
+		}
+		// x and y are in range
+		else if (node.getPoint() != null && node.getXMin() >= xMin && node.getXMax() <= xMax && node.getYMin() >= yMin && node.getYMax() <= yMax) {
+			count += queryRangeTree(zMin, zMax, node);
+		}
+		else {
+			/*
+			if (node.getLeftNode() != null && node.getRightNode() != null && node.getPoint()[0] >= xMin &&
+					  node.getPoint()[0] <= xMax && node.getPoint()[1] >= yMin &&
+					  node.getPoint()[1] <= yMax && node.getPoint()[2] >= zMin &&
+					  node.getPoint()[2] <= zMax){ 
+						  count += 1; 
+					}
+					*/
+			count += queryKDTree(xMin, xMax, yMin, yMax, zMin, zMax, node.getLeftNode(), depth+1);
 			count += queryKDTree(xMin, xMax, yMin, yMax, zMin, zMax, node.getRightNode(), depth+1);
 		}
 		return count;
